@@ -1,0 +1,39 @@
+name: Build AirCard-iOS IPA
+
+on:
+  workflow_dispatch:   # permet de lancer le build manuellement depuis l'onglet "Actions"
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout du repo
+        uses: actions/checkout@v4
+
+      - name: Installer XcodeGen
+        run: brew install xcodegen
+
+      - name: Lister le contenu du repo (debug)
+        run: ls -la
+
+      - name: Rendre les scripts exécutables
+        run: |
+          [ -f build-ios.sh ] && chmod +x build-ios.sh || echo "build-ios.sh absent, on passe"
+          [ -f build-ipa.sh ] && chmod +x build-ipa.sh || echo "build-ipa.sh absent, on passe"
+
+      - name: Build de l'IPA (sans signature de code)
+        env:
+          CODE_SIGNING_ALLOWED: "NO"
+          CODE_SIGNING_REQUIRED: "NO"
+          CODE_SIGN_IDENTITY: ""
+          AD_HOC_CODE_SIGNING_ALLOWED: "YES"
+        run: ./build-ipa.sh
+
+      - name: Upload de l'IPA comme artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AirCard-iOS-ipa
+          path: build/AirCard-iOS.ipa
